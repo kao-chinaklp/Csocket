@@ -1,17 +1,10 @@
-/*
- * 线程池的声明部分
- * 使用posix thread
- */
 #ifndef THREAD_H_
 #define THREAD_H_
 
 #include <pthread.h>
 
-#include "String.h"
-
-#include <deque>
-
-using std::deque;
+#include "Cstring.h"
+#include "Deque.h"
 
 class CTask{
     protected:
@@ -34,8 +27,8 @@ class CThreadPool{
         int TaskNum; // 最大同时运行的线程数
         bool shutdown; // 线程池是否被关闭
         pthread_t *pthread_id;
-        deque<CTask*> queTaskList; // 任务队列
-        deque<pthread_t>BusyQue; // 忙碌队列
+        Deque<CTask*> queTaskList; // 任务队列
+        Deque<pthread_t>BusyQue; // 忙碌队列
         pthread_mutex_t pthreadMutex; // 互斥锁
         pthread_cond_t pthreadCond; // 条件变量
 
@@ -44,7 +37,7 @@ class CThreadPool{
         void Sleep(int ms); // 线程休眠
         int MoveToIdle(pthread_t tid); // 回收空闲线程
         int MoveToBusy(pthread_t tid); // 加入忙碌队列
-        deque<pthread_t>::iterator find(pthread_t tid); //查找线程 
+        Deque<pthread_t>::iterator find(pthread_t tid); //查找线程 
         friend void* ThreadFunc(void* threadData); // 回调函数
 
     public:

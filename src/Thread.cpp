@@ -1,7 +1,4 @@
-/*
- * 线程池功能的实现部分
- */
-#include "thread.h"
+#include "Thread.h"
 
 #include <chrono>
 #include <thread>
@@ -13,16 +10,16 @@ void* ThreadFunc(void* threadData){
         // 循环检测是否有任务
         pthread_mutex_lock(&Data->pthreadMutex);
         // 没有任务，等待执行
-        while(Data->queTaskList.empty()&&!Data->shutdown)
+        while(Data->queTaskList.Empty()&&!Data->shutdown)
             pthread_cond_wait(&Data->pthreadCond, &Data->pthreadMutex);
-        if(Data->queTaskList.empty()&&Data->shutdown){
+        if(Data->queTaskList.Empty()&&Data->shutdown){
             // 线程池关闭
             pthread_mutex_unlock(&Data->pthreadMutex);
             pthread_exit(NULL);
         }
         // 得到任务
-        CTask* task=Data->queTaskList.front();
-        Data->queTaskList.pop_front();
+        CTask* task=Data->queTaskList.Front();
+        Data->queTaskList.PopFront();
         // 取完任务后放锁
         pthread_mutex_unlock(&Data->pthreadMutex);
         Data->MoveToBusy(tid);
@@ -62,23 +59,23 @@ void CThreadPool::Sleep(int ms){
 }
 
 int CThreadPool::MoveToIdle(pthread_t tid){
-    deque<pthread_t>::iterator p=find(tid); // 找到对应线程
+    Deque<pthread_t>::iterator p=find(tid); // 找到对应线程
     if(p==BusyQue.end())return -1;
     pthread_mutex_lock(&pthreadMutex);
-    BusyQue.erase(p); // 移出忙碌队列
+    BusyQue.Erase(p); // 移出忙碌队列
     pthread_mutex_unlock(&pthreadMutex);
     return 1;
 }
 
 int CThreadPool::MoveToBusy(pthread_t tid){
     pthread_mutex_lock(&pthreadMutex);
-    BusyQue.push_back(tid); // 加入忙碌队列
+    BusyQue.PushBack(tid); // 加入忙碌队列
     pthread_mutex_unlock(&pthreadMutex);
     return 1;
 }
 
-deque<pthread_t>::iterator CThreadPool::find(pthread_t tid){
-    deque<pthread_t>::iterator p;
+Deque<pthread_t>::iterator CThreadPool::find(pthread_t tid){
+    Deque<pthread_t>::iterator p;
     while(pthread_mutex_trylock(&pthreadMutex)==EBUSY) // 等待放锁
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     for(p=BusyQue.begin();p!=BusyQue.end();p++)
@@ -107,25 +104,25 @@ int CThreadPool::StopAll(){
     if(shutdown)return -1;
     shutdown=true;
     pthread_cond_broadcast(&pthreadCond);
-    deque<pthread_t>NoJoined;
+    Deque<pthread_t>NoJoined;
     // 阻塞所有线程
     for(int i=0;i<TaskNum;i++){
         if(find(pthread_id[i])!=BusyQue.end()){
-            NoJoined.push_back(pthread_id[i]);
+            NoJoined.PushBack(pthread_id[i]);
             continue;
         }
         pthread_join(pthread_id[i], NULL);
     }
-    while(!NoJoined.empty()){
+    while(!NoJoined.Empty()){
         // 等待线程任务完成
-        deque<pthread_t>::iterator p, tmp;
+        Deque<pthread_t>::iterator p, tmp;
         for(p=NoJoined.begin();p!=NoJoined.end();p++){
-            if(NoJoined.empty())break;
+            if(NoJoined.Empty())break;
             tmp=find(*p);
             pthread_mutex_lock(&pthreadMutex);
             if(tmp==BusyQue.end()){
                 pthread_join(*p, NULL);
-                p=NoJoined.erase(p)-1;
+                p=NoJoined.Erase(p)-1;
             }
             pthread_mutex_unlock(&pthreadMutex);
         }
@@ -137,7 +134,7 @@ int CThreadPool::StopAll(){
 }
 
 int CThreadPool::GetTaskSize(){
-    return queTaskList.size();
+    return queTaskList.Size();
 }
 
 int CThreadPool::GetConnFd(int index){
@@ -146,7 +143,7 @@ int CThreadPool::GetConnFd(int index){
 
 int CThreadPool::AddTask(CTask *task){
     pthread_mutex_lock(&pthreadMutex);
-    queTaskList.push_back(task);
+    queTaskList.PushBack(task);
     pthread_mutex_unlock(&pthreadMutex);
     // 发信号
     pthread_cond_signal(&pthreadCond);

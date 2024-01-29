@@ -1,4 +1,4 @@
-#include "String.h"
+#include "Cstring.h"
 
 ui Strlen(const char* p){
     ui cnt=0;
@@ -48,7 +48,7 @@ ui String::Find(const String str, const ui pos){
     // KMP
     ui* nxt=new ui[this->Size()];
     ui j=0, len=str.Size();
-    for(int i=0;i<len;i++){
+    for(ui i=0;i<len;i++){
         while(j!=0&&str[i]!=str[j])j=nxt[j-1];
         if(str[i]==str[j])j++;
         nxt[i]=j;
@@ -73,6 +73,10 @@ inline char& String::Front(){
 
 inline char& String::Back(){
     return Data.Back();
+}
+
+inline char* String::Cstr(){
+    return this->Data.begin();
 }
 
 void String::PushBack(const char c){
@@ -119,7 +123,7 @@ String::iterator String::Erase(String::iterator p){
 String String::Substr(const ui pos, const ui size){
     assert(pos+size<=this->Size());
     String res="";
-    for(int p=pos;p<pos+size;p++)
+    for(ui p=pos;p<pos+size;p++)
         res.PushBack((*this)[p]);
     return res;
 }

@@ -22,6 +22,7 @@ class String{
         ui Size()const;
         char& Front();
         char& Back();
+        char* Cstr();
 
         void PushBack(const char c);
         void PopBack();
