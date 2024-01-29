@@ -19,7 +19,8 @@ Csocket::~Csocket(){
 void Csocket::Initialization(){
     #ifdef _WIN32
         socketVersion = MAKEWORD(2, 2);
-        WSAStartup(socketVersion, &wsaData);
+        if(WSAStartup(socketVersion, &wsaData))
+            throw std::runtime_error("WSAStartup failed");
     #endif
 }
 

@@ -1,6 +1,8 @@
 #ifndef CSOCKET_H_
 #define CSOCKET_H_
 
+#include "Thread.h"
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
@@ -11,8 +13,6 @@
     #include <arpa/inet.h>
     #include <unistd.h>
 #endif
-
-#include "Thread.h"
 
 enum class CsocketType{TCP, UDP};
 enum class Protocol{IPv4, IPv6};
@@ -41,15 +41,21 @@ class Csocket{
     public:
         Csocket(CsocketType type, Protocol protocol, ServiceType serviceType, const ui port, const char* IP=nullptr):
             type(type), protocol(protocol), serviceType(serviceType){
-            #ifdef _WIN32
-                Initialization();
-            #endif
-            if(ServiceType::Server==serviceType){
-                Create();
-                Bind(port, IP);
-                Listen();
+            try{
+                #ifdef _WIN32
+                    Initialization();
+                #endif
+                if(ServiceType::Server==serviceType){
+                    Create();
+                    Bind(port, IP);
+                    Listen();
+                }
+                else Connect(IP, port);
             }
-            else Connect(IP, port);
+            catch(std::runtime_error &e){
+                printf("%s\n", e.what());
+                abort();
+            }
         }
         ~Csocket();
 
