@@ -59,6 +59,7 @@ class Csocket{
         void Listen(const ui backlog=5);
         void Connect(const char* IP, const ui port);
         void Start();
+        void Send(const char* Buffer, const ui len, const ui socket=0);
         void Close();
 
     public:

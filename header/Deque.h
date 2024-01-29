@@ -4,12 +4,80 @@
 #include <assert.h>
 
 typedef unsigned int ui;
+typedef long long ll;
 
 template<class T>
 class Deque{
     public:
-        typedef T value_type;
-        typedef value_type* iterator;
+        struct iterator{
+            public:
+                Deque<T>ReservedDeque; // Declare ReservedDeque variable
+                iterator():ptr(ReservedDeque){}
+                iterator(const iterator& it):data(it.data), ptr(it.ptr){}
+                iterator(iterator&& it):data(it.data), ptr(it.ptr){it.data=nullptr;}
+                iterator(T* data, Deque<T>& ptr):data(data), ptr(ptr){}
+                iterator& operator++(){++data;return *this;}
+                iterator& operator--(){--data;return *this;}
+                iterator operator++(int){iterator tmp=*this;++data;return tmp;}
+                iterator operator--(int){iterator tmp=*this;--data;return tmp;}
+                iterator operator+(const ll num){return iterator(data+(data-ptr.Data+num)%ptr.Capacity, ptr);}
+                iterator operator-(const ll num){return iterator(data+(data-ptr.Data-num+ptr.Capacity)%ptr.Capacity, ptr);}
+                iterator& operator+=(const ll num){data=(data+num)%ptr.Capacity;return *this;}
+                iterator& operator-=(const ll num){data=(data-num+ptr.Capacity)%ptr.Capacity;return *this;}
+                iterator& operator=(const iterator& it){data=it.data;return *this;}
+                iterator& operator=(iterator&& it){data=it.data;it.data=nullptr;return *this;}
+                bool operator==(const iterator& it)const{return data==it.data;}
+                bool operator!=(const iterator& it)const{return data!=it.data;}
+                bool operator<(const iterator& it)const{return data<it.data;}
+                bool operator>(const iterator& it)const{return data>it.data;}
+                bool operator<=(const iterator& it)const{return data<=it.data;}
+                bool operator>=(const iterator& it)const{return data>=it.data;}
+                T& operator*(){return *data;}
+                const T& operator*()const{return *data;}
+                T* operator->(){return data;}
+                const T* operator->()const{return data;}
+                T& operator*(const ui num){return *(data+num)%ptr.Capacity;}
+                const T& operator*(const ui num)const{return *(data+num)%ptr.Capacity;}
+                T& operator[](const ui num){return *(data+num)%ptr.Capacity;}
+                const T& operator[](const ui num)const{return *(data+num)%ptr.Capacity;}
+
+            private:
+                Deque<T>& ptr;
+                T* data;
+        };
+        friend struct iterator;
+        
+        struct reverseIterator{
+            reverseIterator()=default;
+            reverseIterator(const Deque<T>::iterator& it):rIt(it){}
+            reverseIterator(const reverseIterator& it):rIt(it.rIt){}
+            reverseIterator(reverseIterator&& it):rIt(it.rIt){it.rIt=nullptr;}
+            reverseIterator& operator=(const Deque<T>::iterator& it){rIt=it;return *this;}
+            reverseIterator& operator=(const reverseIterator& it){rIt=it.rIt;return *this;}
+            reverseIterator& operator=(reverseIterator&& it){rIt=it.rIt,it.rIt=nullptr;return *this;}
+            reverseIterator& operator++(){--rIt;return *this;}
+            reverseIterator operator++(int){auto tmp=*this;--rIt;return tmp;}
+            reverseIterator& operator--(){++rIt;return *this;}
+            reverseIterator operator--(int){auto tmp=*this;++rIt;return tmp;}
+            reverseIterator operator+(const long long num){return rIt-num;}
+            reverseIterator operator-(const long long num){return rIt+num;}
+            reverseIterator& operator+=(const long long num){rIt-=num;return *this;}
+            reverseIterator& operator-=(const long long num){rIt+=num;return *this;}
+            bool operator==(const reverseIterator& it)const{return rIt==it.rIt;}
+            bool operator!=(const reverseIterator& it)const{return rIt!=it.rIt;}
+            bool operator<(const reverseIterator& it)const{return rIt>it.rIt;}
+            bool operator>(const reverseIterator& it)const{return rIt<it.rIt;}
+            bool operator<=(const reverseIterator& it)const{return rIt>=it.rIt;}
+            bool operator>=(const reverseIterator& it)const{return rIt<=it.rIt;}
+            T* operator->(){return rIt.operator->();}
+            const T* operator->()const{return rIt.operator->();}
+            T& operator*(){return *rIt;}
+            const T& operator*()const{return *rIt;}
+            T& operator[](const ui num){return *(rIt-num);}
+            const T& operator[](const ui num)const{return *(rIt-num);}
+
+            Deque<T>::iterator rIt;
+        };
 
     public:
         Deque();
@@ -36,12 +104,12 @@ class Deque{
         iterator Erase(iterator p);
         iterator Erase(const ui pos, const ui size=1);
         
-        const iterator& cbegin()const;
-        const iterator& cend()const;
-        const iterator& begin()const;
-        const iterator& end()const;
-        iterator& begin();
-        iterator& end();
+        const iterator cbegin()const;
+        const iterator cend()const;
+        const iterator begin()const;
+        const iterator end()const;
+        iterator begin();
+        iterator end();
 
     private:
         T* Data;
@@ -187,29 +255,30 @@ typename Deque<T>::iterator Deque<T>::Insert(const ui pos, const T& val){
         Data[i]=Data[(i-1+Capacity)%Capacity];
     Data[i]=val;
     End=(End+1)%Capacity;
-    return Data+i;
+    return iterator(Data+i, *this);
 }
 
 template<class T>
 typename Deque<T>::iterator Deque<T>::Insert(iterator p, const T& val){
-    assert(p>=Data+Begin&&p<=Data+End);
+    assert(p>=Data&&p<Data+End&&p>=Data+Begin&&p<Data+Capacity);
     if(Size()==Capacity)Extend();
     ui i=End;
     for(;i!=Begin&&Data+i!=p;i=(i-1+Capacity)%Capacity)
         Data[i]=Data[(i-1+Capacity)%Capacity];
     Data[i]=val;
     End=(End+1)%Capacity;
-    return Data+i;
+    return iterator(Data+i, *this);
 }
 
 template<class T>
 typename Deque<T>::iterator Deque<T>::Erase(iterator p){
-    assert(p>=Data+Begin&&p<Data+End);
-    ui i=p-Data;
+    iterator tmp(Data, *this);
+    assert(p>=tmp&&p<tmp+End&&p>=tmp+Begin&&p<tmp+Capacity);
+    ui i=Begin;
     for(;i!=End;i=(i+1)%Capacity)
         Data[i]=Data[(i+1)%Capacity];
     End=(End-1+Capacity)%Capacity;
-    return Data+i;
+    return iterator(Data+i, *this);
 }
 
 template<class T>
@@ -219,37 +288,37 @@ typename Deque<T>::iterator Deque<T>::Erase(const ui pos, const ui size){
     for(;i+size!=End;i=(i+1)%Capacity)
         Data[i]=Data[i+size];
     End=(End-size+Capacity)%Capacity;
-    return Data+i;
+    return iterator(Data+i, *this);
 }
 
 template<class T>
-const typename Deque<T>::iterator& Deque<T>::cbegin()const{
-    return Data+Begin;
+const typename Deque<T>::iterator Deque<T>::cbegin()const{
+    return iterator(Data+Begin, *this);
 }
 
 template<class T>
-const typename Deque<T>::iterator& Deque<T>::cend()const{
-    return Data+End;
+const typename Deque<T>::iterator Deque<T>::cend()const{
+    return iterator(Data+End, *this);
 }
 
 template<class T>
-const typename Deque<T>::iterator& Deque<T>::begin()const{
-    return Data+Begin;
+const typename Deque<T>::iterator Deque<T>::begin()const{
+    return iterator(Data+Begin, *this);
 }
 
 template<class T>
-const typename Deque<T>::iterator& Deque<T>::end()const{
-    return Data+End;
+const typename Deque<T>::iterator Deque<T>::end()const{
+    return iterator(Data+End, *this);
 }
 
 template<class T>
-typename Deque<T>::iterator& Deque<T>::begin(){
-    return Data+Begin;
+typename Deque<T>::iterator Deque<T>::begin(){
+    return iterator(Data+Begin, *this);
 }
 
 template<class T>
-typename Deque<T>::iterator& Deque<T>::end(){
-    return Data+End;
+typename Deque<T>::iterator Deque<T>::end(){
+    return iterator(Data+End, *this);
 }
 
 template<class T>

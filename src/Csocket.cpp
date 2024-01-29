@@ -112,6 +112,11 @@ void Csocket::Start(){
     }
 }
 
+void Csocket::Send(const char* Buffer, const ui len, const ui socket){
+    if(::send(socket, Buffer, len, 0)==-1)
+        throw std::runtime_error("send failed");
+}
+
 void Csocket::Close(){
     #ifdef _WIN32
         closesocket(socket);
